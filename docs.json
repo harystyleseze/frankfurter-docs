@@ -8,56 +8,93 @@
   },
   "i18n": {
     "defaultLocale": "en",
-    "locales": [
-      {
-        "code": "en",
-        "label": "English"
-      }
-    ]
+    "locales": [{ "code": "en", "label": "English" }]
   },
   "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/harystyleseze/frankfurter-docs",
+        "type": "github"
+      }
+    ],
     "primary": {
-      "label": "Get started",
+      "label": "Quickstart",
       "href": "/quickstart"
     }
   },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/harystyleseze/frankfurter-docs"
+    },
+    "links": [
+      {
+        "heading": "Documentation",
+        "items": [
+          { "label": "Quickstart", "href": "/quickstart" },
+          { "label": "Historical rates", "href": "/guides/historical-rates" },
+          { "label": "API overview", "href": "/api/introduction" }
+        ]
+      },
+      {
+        "heading": "Frankfurter project",
+        "items": [
+          { "label": "Official site", "href": "https://frankfurter.dev" },
+          { "label": "Source code", "href": "https://github.com/lineofflight/frankfurter" },
+          { "label": "Report an API issue", "href": "https://github.com/lineofflight/frankfurter/issues" }
+        ]
+      }
+    ],
+    "copyright": "© {year} Harrison Eze. Frankfurter is an independent open-source project."
+  },
+  "redirects": [
+    { "source": "/components", "destination": "/", "permanent": true },
+    { "source": "/customization", "destination": "/", "permanent": true },
+    { "source": "/guides/create-a-site", "destination": "/", "permanent": true },
+    { "source": "/guides/work-with-the-cli", "destination": "/", "permanent": true },
+    { "source": "/guides/connect-ai-tools", "destination": "/", "permanent": true },
+    { "source": "/api/authentication", "destination": "/api/introduction", "permanent": true }
+  ],
+  "readiness": {
+    "topK": 5,
+    "goldenQuestions": [
+      { "question": "How do I convert US dollars to Nigerian naira?", "expect": ["/quickstart"] },
+      { "question": "Does Frankfurter need an API key?", "expect": ["/", "/api/introduction"] },
+      { "question": "How do I get exchange rates for a date range?", "expect": ["/guides/historical-rates"] },
+      { "question": "How do I download rates as CSV?", "expect": ["/guides/historical-rates", "/api/introduction"] },
+      { "question": "What does the 422 invalid currency error mean?", "expect": ["/guides/historical-rates", "/api/introduction"] },
+      { "question": "How do I get the official Central Bank of Nigeria rate?", "expect": ["/guides/historical-rates"] },
+      { "question": "What is the base URL of the Frankfurter API?", "expect": ["/api/introduction"] },
+      { "question": "Should I cache responses, and how often does Frankfurter publish new rates?", "expect": ["/api/introduction", "/quickstart"] }
+    ]
+  },
   "tabs": [
     {
-      "tab": "Get started",
+      "tab": "Documentation",
       "groups": [
         {
           "group": "Get started",
+          "icon": "party-horn",
           "pages": ["introduction", "quickstart"]
         },
         {
-          "group": "Design your docs",
-          "pages": ["components", "customization"]
+          "group": "Guides",
+          "icon": "book-open",
+          "pages": ["guides/historical-rates"]
         }
       ]
     },
     {
-      "tab": "Guides",
-      "groups": [
-        {
-          "group": "Work with Thally",
-          "pages": [
-            "guides/create-a-site",
-            "guides/work-with-the-cli",
-            "guides/connect-ai-tools"
-          ]
-        }
-      ]
-    },
-    {
-      "tab": "API Reference",
+      "tab": "API reference",
       "groups": [
         {
           "group": "Overview",
-          "pages": ["api/introduction", "api/authentication"]
+          "pages": ["api/introduction"]
         }
       ],
       "api": {
-        "source": "openapi.yaml"
+        "source": "openapi.yaml",
+        "tagsOrder": ["Rates", "Currencies", "Providers", "Coverage"]
       }
     },
     {

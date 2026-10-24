@@ -176,13 +176,13 @@ const templateSiteConfig: SiteConfig = {
 // Managed by Thally Cloud onboarding.
 export const siteConfig: SiteConfig = {
   ...templateSiteConfig,
-  name: "frankfurter-docs",
-  description: "Documentation for Frankfurter, explaining its features, API usage, and integration for developers",
+  name: "Frankfurter API",
+  description: "Community documentation for Frankfurter, the free open-source exchange-rate API: quickstart, historical rates guide, and a live API reference.",
   repoUrl: "https://github.com/harystyleseze/frankfurter-docs",
   links: [
-    { label: "Get started", href: "/quickstart" },
-    { label: "Support", href: "https://github.com/harystyleseze/frankfurter-docs/issues/new" },
-    { label: "GitHub", href: "https://github.com/harystyleseze/frankfurter-docs" },
+    { label: "Quickstart", href: "/quickstart" },
+    { label: "API reference", href: "/api/introduction" },
+    { label: "Frankfurter on GitHub", href: "https://github.com/lineofflight/frankfurter" },
     { label: "Changelog", href: "/changelog" },
   ],
 };

@@ -1,49 +1,109 @@
 ---
 title: API overview
 navTitle: Overview
-description: What this API reference covers and how to try every request live.
+description: Base URL, versioning, request conventions, response shapes, error codes, output formats, and fair-use guidance for the Frankfurter v2 API.
+lastVerified: 2026-10-24
+verifiedVersion: "2.1.1"
+keywords:
+  - base URL
+  - error codes
+  - 422
+  - 404
+  - CSV
+  - NDJSON
+  - rate limit
 ---
 
-This reference documents the Sample Posts API — a small, working API backed by
-the public [JSONPlaceholder](https://jsonplaceholder.typicode.com) service.
-Every endpoint page has a **Send** button that runs the real request from your
-browser, so you can inspect live responses before writing a line of code.
+Frankfurter is a read-only HTTPS API. Every endpoint is a `GET` request that needs no
+authentication. This page covers the conventions shared by all endpoints; the generated pages in
+this tab document each endpoint and let you call it live.
 
-## Base URL
-
-All requests use the same base URL:
+## Base URL and versions
 
 ```text
-https://jsonplaceholder.typicode.com
+https://api.frankfurter.dev/v2
 ```
 
-## Try your first request
+Version 2 is current. Version 1 (`/v1/latest`, `/v1/currencies`, and date paths) is deprecated
+but still answers requests. New integrations should use v2, which adds providers, coverage,
+grouping, and the `{status, message}` error shape.
 
-<Steps>
-  <Step title="Open an endpoint">
-    Pick **Get a post** from the Posts group in the sidebar.
-  </Step>
-  <Step title="Send it">
-    Keep the default id of `1` and press **Send**. The response panel shows a
-    real `200` with the post body.
-  </Step>
-  <Step title="Change the input">
-    Try an id above `100` to see the API's `404` behavior.
-  </Step>
-</Steps>
+## Request conventions
 
-Writes are safe to experiment with: the demo server accepts `POST` requests
-and echoes the created resource back with a generated id without storing it.
+| Convention | Detail |
+|---|---|
+| Currency codes | ISO 4217, case-insensitive. `usd` and `USD` are equivalent. |
+| Dates | `YYYY-MM-DD`. `date` cannot be combined with `from` or `to`. |
+| Lists | Comma-separated, no spaces: `quotes=NGN,GHS,KES`. |
+| Default base | `EUR` when `base` is omitted on `/rates`. |
+| Default range end | `to` defaults to today. |
+| Providers | Keys such as `ECB` or `CBN`, case-insensitive. See `GET /providers`. |
 
-## Make this reference yours
+## Response shapes
 
-This sample exists so the reference has something real to show. To document
-your own API, replace `openapi.yaml` at the repository root with your
-specification — the endpoint pages, navigation, and playground regenerate from
-it on the next publish.
+A single pair returns one object. Everything else returns a JSON array of the same objects, one
+per pair per date.
 
-<Note type="info" title="Keep the overview pages">
-  Readers orient faster when a reference opens with what the API does, how to
-  authenticate, and one runnable request. Rewrite this page and
-  [Authentication](/api/authentication) for your API instead of deleting them.
+```json title="Rate"
+{"date":"2026-10-24","base":"USD","quote":"NGN","rate":1340.09}
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `date` | string | Observation date of the data behind the rate |
+| `base` | string | Currency you have |
+| `quote` | string | Currency you want |
+| `rate` | number | Units of `quote` per one unit of `base` |
+| `providers` | array | Only with `expand=providers`. Each contributing `{key, date, rate}` with `excluded: true` on outliers. |
+
+## Errors
+
+Errors return a JSON body with the HTTP status repeated in `status` and a short `message`.
+
+| Status | When | Example message |
+|---|---|---|
+| `400` | Malformed request | `bad request` |
+| `403` | Blocked by the CDN before reaching the API, typically Python's default `User-Agent`. Set a descriptive `User-Agent`. | `error code: 1010` (plain text) |
+| `404` | No data for the pair, date, or provider | `not found` |
+| `422` | Request understood but a value is invalid | `invalid currency: ABC`, `invalid date` |
+| `503` | Live computation limit reached or deadline exceeded. Honor `Retry-After`. | `request deadline exceeded` |
+
+The [historical rates guide](/guides/historical-rates#troubleshooting) walks through each error
+with a fix.
+
+## Output formats
+
+| Format | How to request |
+|---|---|
+| JSON | Default |
+| CSV | Append `.csv` to the path, for example `/rates.csv`, or send `Accept: text/csv` |
+| NDJSON | Send `Accept: application/x-ndjson` to receive one JSON object per line |
+
+## Caching and fair use
+
+There are no quotas and no API keys. The public instance sits behind a CDN and returns a
+`Cache-Control` header of several hours, so repeated identical requests are cheap. Still, be a
+good neighbor:
+
+- Store each day's rates locally and convert from your copy instead of calling per conversion.
+- Request only the quotes you need with `quotes`.
+- Use `group=week` or `group=month` for charts spanning years.
+- Back off when you receive `503` with `Retry-After`.
+
+If you need isolation or an SLA, the project is MIT-licensed and
+[self-hostable with Docker](https://frankfurter.dev/deploy/).
+
+## Use the live console
+
+Every endpoint page in this tab has a **Try it** panel. Fill in the parameters and select
+**Send**. The request goes to `https://api.frankfurter.dev/v2` through the documentation
+server, so the response you see is the real API response, including error bodies. Nothing here
+is simulated.
+
+<Note type="info" title="Where this reference comes from">
+  The endpoint pages are generated from `openapi.yaml` in the
+  [documentation repository](https://github.com/harystyleseze/frankfurter-docs), which vendors
+  the official specification published at `https://api.frankfurter.dev/v2/openapi.json`
+  (upstream version 2.1.1). You can also fetch the served copy at
+  [`/openapi.yaml`](/openapi.yaml).
 </Note>

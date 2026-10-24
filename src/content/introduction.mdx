@@ -1,45 +1,82 @@
 ---
 title: Introduction
-description: Give readers a clear path from their first question to a result they can verify.
+description: Frankfurter is a free, open-source exchange-rate API with no API key. Learn what it offers, who it is for, and where to start.
 mode: home
+lastVerified: 2026-10-24
+verifiedVersion: "2.1.1"
+keywords:
+  - exchange rates
+  - currency API
+  - naira
+  - central bank
 ---
 
 <Hero
-  title="Build documentation around the reader"
-  subtitle="Start with a useful first result, organize what follows, and publish every format from one reviewable source."
-  primaryLabel="Get started"
+  title="Exchange rates without an API key"
+  subtitle="Frankfurter serves current and historical foreign exchange rates published by 105 central banks and official sources. No sign-up, no quotas, open source."
+  primaryLabel="Convert USD to NGN in five minutes"
   primaryHref="/quickstart"
-  secondaryLabel="Publish your docs"
-  secondaryHref="/guides/create-a-site"
+  secondaryLabel="Browse the API reference"
+  secondaryHref="/api/introduction"
 />
 
-## Build the reader journey
+## What Frankfurter does
 
-Begin with the task that brings most readers to your documentation, then make
-the next useful step obvious.
+Frankfurter collects the reference rates that central banks publish every day, stores the full
+history, and blends them into one mid-market rate per currency pair. You query it over plain HTTPS
+and get JSON, CSV, or NDJSON back. The data starts in 1999 for most currencies, including the
+Nigerian naira.
+
+| Fact | Value |
+|---|---|
+| Base URL | `https://api.frankfurter.dev/v2` |
+| Authentication | None |
+| Quotas | None. Requests are rate-limited only to prevent abuse. |
+| Currencies | 165 active, 223 including legacy codes |
+| Sources | 105 central banks and official providers, including the Central Bank of Nigeria (`CBN`) and the European Central Bank (`ECB`) |
+| Formats | JSON (default), CSV, NDJSON |
+| Updates | Daily, as each provider publishes |
+| License | MIT, self-hostable with Docker |
+
+## Who these docs are for
+
+- **Fintech and remittance developers** who need a dependable mid-market rate for pricing,
+  reconciliation, or display, without paying for a commercial feed.
+- **Analysts and data engineers** who want years of daily history as CSV or a time series.
+- **Students and hobbyists** building a currency converter, a dashboard, or a bot.
+
+You need nothing more than `curl` or a language that can make an HTTPS request.
+
+## Start here
 
 <CardGroup cols="2">
-  <Card title="Write your quickstart" icon="party-horn" href="/quickstart">
-    Turn prerequisites, setup, one realistic task, and verification into a short path.
+  <Card title="Quickstart" icon="party-horn" href="/quickstart">
+    Fetch the latest USD to NGN rate and convert an amount in JavaScript or Python.
   </Card>
-  <Card title="Organize your navigation" icon="grid-round" href="/customization">
-    Group related tasks and references around how people use your product.
+  <Card title="Historical rates and time series" icon="book-open" href="/guides/historical-rates">
+    Query a specific date, a date range, monthly averages, CSV exports, and single-provider rates.
   </Card>
-  <Card title="Document your API" icon="code-simple" href="/api">
-    Replace `openapi.yaml` to publish browsable endpoint docs with a live playground.
+  <Card title="API overview" icon="code-simple" href="/api/introduction">
+    Conventions, response shapes, error codes, output formats, and how to use the live console.
   </Card>
-  <Card title="Learn the Thally workflow" icon="wrench" href="/guides/create-a-site">
-    Create, publish, and update sites from the Cloud dashboard, the CLI, or your AI tools.
+  <Card title="Endpoint reference" icon="link-simple" href="/api">
+    Every endpoint with parameters, examples, and a Try it console that sends real requests.
   </Card>
 </CardGroup>
 
-## Publish from one source
+## How a blended rate works
 
-Thally turns the same reviewed content into HTML, search, agent discovery files,
-Markdown mirrors, and a read-only MCP surface — so people and AI tools read the
-same, current answer. Add only the locales your readers need.
+Several providers can publish a rate for the same pair on the same day, and they rarely agree to
+the last digit. Frankfurter converts each provider's observation into the pair you asked for,
+discards outliers, and returns the blend. Add `expand=providers` to any rates request to see every
+contributing observation, or query one provider directly when you need an official figure such as
+the CBN rate. The [historical rates guide](/guides/historical-rates#compare-the-blend-with-one-provider)
+shows both.
 
-<Note type="info" title="Start with the product, not the template">
-  Replace this page with the questions, terminology, and workflows your readers
-  already use. Keep `docs.json` focused on the path between those tasks.
+<Note type="info" title="About these docs">
+  This is an independent documentation site for the open-source Frankfurter project, built with
+  Thally. Every request and response shown here was run against the public API on the date in the
+  page footer. Rates in the examples are real values from that day and will differ when you run
+  them. Report API bugs upstream at
+  [github.com/lineofflight/frankfurter](https://github.com/lineofflight/frankfurter/issues).
 </Note>
