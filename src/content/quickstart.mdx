@@ -1,47 +1,137 @@
 ---
 title: Quickstart
-description: Guide a new reader through one useful workflow and show them how to verify it.
+description: Fetch the latest US dollar to Nigerian naira rate from Frankfurter and convert an amount in JavaScript or Python, with no API key.
+lastVerified: 2026-10-24
+verifiedVersion: "2.1.1"
+keywords:
+  - USD to NGN
+  - convert currency
+  - fetch exchange rate
+  - quickstart
 ---
 
-A strong quickstart produces one meaningful result. Replace the placeholders
-below with the shortest supported path for your product.
+In five minutes you will fetch a live exchange rate, convert an amount with it, and confirm the
+result in the interactive console. Nothing to sign up for and nothing to install beyond `curl`.
 
 ## Before you begin
 
-List only the requirements needed for this workflow:
-
-- An account or credential, when required
-- A supported runtime, device, browser, or operating system
-- Permission to create or change the resource used in the example
+- A terminal with `curl` (preinstalled on macOS, Linux, and Windows 10+).
+- Optional: Node.js 18 or later, or Python 3.8 or later, for the code samples.
 
 <Steps>
-  <Step title="Install the required tool">
-    Give readers one recommended installation command.
+  <Step title="Fetch the latest rate">
+    Ask for a single currency pair. The path is `/rate/{base}/{quote}`, so `USD` is the currency
+    you have and `NGN` is the currency you want.
 
     ```bash
-    npm install your-package
+    curl https://api.frankfurter.dev/v2/rate/USD/NGN
+    ```
+
+    ```json
+    {"date":"2026-10-24","base":"USD","quote":"NGN","rate":1340.09}
+    ```
+
+    `rate` is how many naira one US dollar buys. `date` is the observation date of the data
+    behind the rate, which can be a day earlier than today if no provider has published yet.
+  </Step>
+
+  <Step title="Convert an amount">
+    Frankfurter has no conversion endpoint. Multiply the amount by the rate in your own code,
+    which also means one request can price many amounts.
+
+    <Tabs>
+      <Tab title="JavaScript">
+        Node.js 18+ or any modern browser. Save as `convert.mjs` and run `node convert.mjs`.
+
+        ```javascript title="convert.mjs"
+        const amount = 250
+
+        const response = await fetch('https://api.frankfurter.dev/v2/rate/USD/NGN')
+        if (!response.ok) throw new Error(`Frankfurter returned ${response.status}`)
+
+        const { rate, date } = await response.json()
+        console.log(`${amount} USD = ${(amount * rate).toFixed(2)} NGN (rate from ${date})`)
+        ```
+      </Tab>
+      <Tab title="Python">
+        Standard library only. Save as `convert.py` and run `python3 convert.py`.
+
+        ```python title="convert.py"
+        import json
+        import urllib.request
+
+        amount = 250
+        request = urllib.request.Request(
+            "https://api.frankfurter.dev/v2/rate/USD/NGN",
+            headers={"User-Agent": "my-currency-app/1.0"},
+        )
+
+        with urllib.request.urlopen(request) as response:
+            data = json.load(response)
+
+        print(f"{amount} USD = {amount * data['rate']:.2f} NGN (rate from {data['date']})")
+        ```
+
+        The `User-Agent` header matters. Frankfurter's CDN rejects Python's default
+        `Python-urllib/3.x` agent with `403 Forbidden`, so name your application. The
+        `requests` library is not affected.
+      </Tab>
+    </Tabs>
+
+    Both print the same line:
+
+    ```text
+    250 USD = 335022.50 NGN (rate from 2026-10-24)
     ```
   </Step>
-  <Step title="Add the minimum configuration">
-    Include only the values needed for the first successful run.
+
+  <Step title="Price several currencies in one request">
+    Use `/rates` with `base` and a comma-separated `quotes` list. You get one record per pair,
+    each with its own observation date.
 
     ```bash
-    your-cli init
+    curl "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN,GHS,KES"
     ```
-  </Step>
-  <Step title="Complete the first task">
-    Use a realistic example that produces an observable result.
 
-    ```bash
-    your-cli start
+    ```json
+    [
+      {"date":"2026-10-23","base":"USD","quote":"GHS","rate":11.6676},
+      {"date":"2026-10-24","base":"USD","quote":"KES","rate":129.72},
+      {"date":"2026-10-24","base":"USD","quote":"NGN","rate":1340.09}
+    ]
     ```
+
+    Currency codes are case-insensitive, so `usd` and `ngn` work too.
   </Step>
-  <Step title="Verify the result">
-    State exactly what the reader should see and how to recover when it does not appear.
+
+  <Step title="Verify in the console">
+    Open [Get a single exchange rate pair](/api/default/rate/base/quote/get) in the API
+    reference, enter `USD` and `NGN`, and select **Send**. The console calls the real API through
+    the docs server, so the response matches what `curl` returned.
   </Step>
 </Steps>
 
-## Choose the next task
+## What success looks like
 
-Link to the guide that naturally follows this result. Avoid ending the reader’s
-journey with a generic list of every feature.
+A `200` response with exactly four fields: `date`, `base`, `quote`, and `rate`. Your converted
+amount equals `amount × rate`. If you see a `422` with `invalid currency`, check the three-letter
+code against the [currencies endpoint](/api/default/currencies/get). If you see `404 not found`,
+the pair has no data for that date yet. A `403 Forbidden` from Python means the default
+`User-Agent` was blocked; set your own as shown in step 2.
+
+<Tip title="Cache the rate">
+  Rates change at most a few times a day and responses carry a `Cache-Control` header of
+  several hours. Store the rate and its `date`, then reuse it for every conversion you make
+  that day instead of calling the API per conversion.
+</Tip>
+
+## Next steps
+
+<CardGroup cols="2">
+  <Card title="Historical rates and time series" icon="book-open" href="/guides/historical-rates">
+    Query past dates, date ranges, monthly averages, CSV exports, and official CBN rates.
+  </Card>
+  <Card title="API overview" icon="code-simple" href="/api/introduction">
+    Conventions, error codes, output formats, and fair-use guidance.
+  </Card>
+</CardGroup>

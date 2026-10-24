@@ -1,0 +1,274 @@
+---
+title: Fetch historical rates and build a time series
+navTitle: Historical rates
+description: Query Frankfurter for a rate on a past date, a date range, weekly or monthly values, CSV exports, and single-provider rates such as the CBN official rate, with troubleshooting.
+lastVerified: 2026-10-24
+verifiedVersion: "2.1.1"
+keywords:
+  - historical exchange rates
+  - time series
+  - date range
+  - CSV export
+  - Central Bank of Nigeria
+  - blended rate
+---
+
+By the end of this guide you will have the USD to NGN history for any period as JSON or CSV,
+downsampled to weekly or monthly values, and you will know when to use the blended rate versus
+an official rate from one central bank.
+
+## Before you begin
+
+- `curl`, or any HTTP client.
+- Familiarity with the `/rate/{base}/{quote}` call from the [quickstart](/quickstart).
+
+All examples use `USD` as the base and `NGN` as the quote. Swap in any of the
+[165 supported currencies](/api/default/currencies/get).
+
+<Steps>
+  <Step title="Get the rate on a specific date">
+    Add `date` in `YYYY-MM-DD` format to the single-pair endpoint.
+
+    ```bash
+    curl "https://api.frankfurter.dev/v2/rate/USD/NGN?date=2026-10-17"
+    ```
+
+    ```json
+    {"date":"2026-10-17","base":"USD","quote":"NGN","rate":1330.03}
+    ```
+
+    Frankfurter answers with the rate in effect on that date. When no provider published on the
+    day you asked for, it carries the most recent earlier observation forward.
+  </Step>
+
+  <Step title="Fetch a date range">
+    Use `/rates` with `from` and `to`. You get one record per calendar day, oldest first. `to`
+    defaults to today.
+
+    ```bash
+    curl "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN&from=2026-10-01&to=2026-10-07"
+    ```
+
+    ```json
+    [
+      {"date":"2026-10-01","base":"USD","quote":"NGN","rate":1329.17},
+      {"date":"2026-10-02","base":"USD","quote":"NGN","rate":1329.89},
+      {"date":"2026-10-03","base":"USD","quote":"NGN","rate":1329.82},
+      {"date":"2026-10-04","base":"USD","quote":"NGN","rate":1329.52},
+      {"date":"2026-10-05","base":"USD","quote":"NGN","rate":1329.95},
+      {"date":"2026-10-06","base":"USD","quote":"NGN","rate":1328.73},
+      {"date":"2026-10-07","base":"USD","quote":"NGN","rate":1330.09}
+    ]
+    ```
+
+    `date` and `from`/`to` are mutually exclusive. Send one or the other.
+  </Step>
+
+  <Step title="Downsample long ranges">
+    A year of daily data is 365 records per pair. Add `group=week` or `group=month` to receive
+    one value per period, dated at the start of that period.
+
+    ```bash
+    curl "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN&from=2026-01-01&to=2026-06-30&group=month"
+    ```
+
+    ```json
+    [
+      {"date":"2026-01-01","base":"USD","quote":"NGN","rate":1420.23},
+      {"date":"2026-02-01","base":"USD","quote":"NGN","rate":1356.71},
+      {"date":"2026-03-01","base":"USD","quote":"NGN","rate":1383.23},
+      {"date":"2026-04-01","base":"USD","quote":"NGN","rate":1362.64},
+      {"date":"2026-05-01","base":"USD","quote":"NGN","rate":1368.86},
+      {"date":"2026-06-01","base":"USD","quote":"NGN","rate":1365.01}
+    ]
+    ```
+
+    `group` only applies to date ranges. It is ignored on single-date requests.
+  </Step>
+
+  <Step title="Export to CSV or stream as NDJSON">
+    Append `.csv` to the path for a spreadsheet-ready file. The columns match the JSON fields.
+
+    ```bash
+    curl "https://api.frankfurter.dev/v2/rates.csv?base=USD&quotes=NGN&from=2026-10-01&to=2026-10-03" -o usd-ngn.csv
+    ```
+
+    ```csv title="usd-ngn.csv"
+    date,base,quote,rate
+    2026-10-01,USD,NGN,1329.17
+    2026-10-02,USD,NGN,1329.89
+    2026-10-03,USD,NGN,1329.82
+    ```
+
+    For very large ranges, request NDJSON and process one line at a time instead of holding the
+    whole array in memory.
+
+    ```bash
+    curl -H "Accept: application/x-ndjson" "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN&from=2026-10-01&to=2026-10-03"
+    ```
+  </Step>
+
+  <Step title="Summarize the series in code">
+    The response is a plain array, so a few lines give you the high, low, and average for any
+    period. Run this with `node summarize.mjs`.
+
+    ```javascript title="summarize.mjs"
+    const url = 'https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN&from=2026-10-01&to=2026-10-07'
+    const rows = await (await fetch(url)).json()
+
+    const rates = rows.map((row) => row.rate)
+    const average = rates.reduce((sum, rate) => sum + rate, 0) / rates.length
+    const high = rows.find((row) => row.rate === Math.max(...rates))
+    const low = rows.find((row) => row.rate === Math.min(...rates))
+
+    console.log(`High ${high.rate} on ${high.date}`)
+    console.log(`Low ${low.rate} on ${low.date}`)
+    console.log(`Average ${average.toFixed(2)} over ${rows.length} days`)
+    ```
+
+    ```text
+    High 1330.09 on 2026-10-07
+    Low 1328.73 on 2026-10-06
+    Average 1329.60 over 7 days
+    ```
+  </Step>
+</Steps>
+
+## Compare the blend with one provider
+
+The default feed is a blend of every provider that published the pair. Add `expand=providers`
+to see who contributed and which observations were excluded as outliers.
+
+```bash
+curl "https://api.frankfurter.dev/v2/rates?base=USD&quotes=NGN&expand=providers"
+```
+
+```json
+[
+  {
+    "date": "2026-10-24",
+    "base": "USD",
+    "quote": "NGN",
+    "rate": 1340.09,
+    "providers": [
+      {"key": "BDI", "date": "2026-10-23", "rate": 1344.4},
+      {"key": "BNA", "date": "2026-10-23", "rate": 1376.89},
+      {"key": "BOTA", "date": "2026-10-24", "rate": 1333.98},
+      {"key": "CBG", "date": "2026-10-21", "rate": 1443.2, "excluded": true},
+      {"key": "CBN", "date": "2026-10-22", "rate": 1343.9},
+      {"key": "CBR", "date": "2026-10-23", "rate": 1334.72}
+    ]
+  }
+]
+```
+
+The list above is shortened. The live response names every provider that published the pair.
+
+When you need an official figure rather than a market consensus, query the provider directly.
+The Central Bank of Nigeria publishes under the key `CBN`.
+
+```bash
+curl https://api.frankfurter.dev/v2/providers/CBN/rate/USD/NGN
+```
+
+```json
+{"date":"2026-10-22","base":"USD","quote":"NGN","rate":1343.9049}
+```
+
+Provider endpoints accept the same `date`, `from`, `to`, and `group` parameters as `/rates`.
+List every provider with [`GET /providers`](/api/default/providers/get), or check one with
+[`GET /providers/{provider}`](/api/default/providers/provider/get) to see which currencies it
+covers and since when.
+
+<Warning title="Blended rates are reference rates">
+  Frankfurter returns mid-market reference rates. Banks and exchange apps quote a spread around
+  them, so expect your bank's buy or sell rate to differ. Use the blend for analytics and
+  display, and a named provider when a regulation or contract names a specific source.
+</Warning>
+
+## Troubleshooting
+
+<Accordion title="422 invalid currency">
+  ```json
+  {"status":422,"message":"invalid currency: ABC"}
+  ```
+
+  The code is not a supported ISO 4217 currency. Check the spelling against
+  [`GET /currencies`](/api/default/currencies/get). Legacy currencies that no longer trade, such
+  as `DEM`, only appear when you add `scope=all`.
+</Accordion>
+
+<Accordion title="422 invalid date">
+  ```json
+  {"status":422,"message":"invalid date"}
+  ```
+
+  Dates must be `YYYY-MM-DD`. A value such as `17-10-2026` is rejected. The same error appears
+  when `date` is combined with `from` or `to`.
+</Accordion>
+
+<Accordion title="404 not found">
+  ```json
+  {"status":404,"message":"not found"}
+  ```
+
+  No data exists for what you asked. The usual causes are a date before the pair's history
+  starts, a date in the future, or an unknown provider key. Find the queryable window first:
+
+  ```bash
+  curl "https://api.frankfurter.dev/v2/coverage?base=USD&quotes=NGN"
+  ```
+
+  ```json
+  {"base":"USD","quotes":["NGN"],"providers":null,"start_date":"1999-01-04","end_date":"2026-10-25"}
+  ```
+
+  Requests between `start_date` and `end_date` succeed.
+</Accordion>
+
+<Accordion title="403 Forbidden with error code 1010">
+  ```text
+  error code: 1010
+  ```
+
+  The request never reached Frankfurter. Its CDN blocks a few generic client signatures, and
+  Python's default `User-Agent` (`Python-urllib/3.x`) is one of them. Send any descriptive
+  `User-Agent` header and the same request succeeds:
+
+  ```python
+  import urllib.request
+
+  request = urllib.request.Request(
+      "https://api.frankfurter.dev/v2/rate/USD/NGN",
+      headers={"User-Agent": "my-currency-app/1.0"},
+  )
+  print(urllib.request.urlopen(request).read())
+  ```
+
+  `curl`, Node.js `fetch`, browsers, and the Python `requests` library are not blocked.
+</Accordion>
+
+<Accordion title="The response is an empty array">
+  A range request returns `[]` when `from` is later than `to`, or when no provider published
+  any quote in the range. Swap the dates or widen the range.
+</Accordion>
+
+<Accordion title="503 with a Retry-After header">
+  Long daily ranges that include `providers` or `expand=providers` are computed live, and the
+  server limits how many run at once. Wait the number of seconds in the `Retry-After` header,
+  then retry. If it keeps happening, narrow the range, filter with `quotes`, or add `group`.
+</Accordion>
+
+<Accordion title="Today's rate has yesterday's date">
+  Each provider publishes on its own schedule, usually in the afternoon of its local time zone.
+  Until the first provider publishes for today, the latest observation is dated yesterday or
+  the last business day. This is expected. Treat `date` as the authoritative "as of" value and
+  show it next to the rate.
+</Accordion>
+
+## Next steps
+
+- Read the [API overview](/api/introduction) for the full error table, output formats, and
+  caching guidance.
+- Try the [Get historical and time-series rates](/api/default/rates/get) endpoint in the
+  console with your own currencies and dates.
