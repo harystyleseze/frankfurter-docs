@@ -1,8 +1,8 @@
 ---
 title: "Publish API docs with a live console in an afternoon: building Frankfurter docs on Thally"
-subtitle: "From an empty Thally Cloud workspace to a published site with a quickstart, a guide, a generated API reference, and an agent-readiness score of {{SCORE_AFTER}}"
+subtitle: "From an empty Thally Cloud workspace to a published site with a quickstart, a guide, a generated API reference, and an agent-readiness score of 100 (A)"
+slug: build-api-docs-with-thally
 tags: documentation, developer-experience, api, openapi
-canonical: https://github.com/harystyleseze/frankfurter-docs/blob/main/article/build-api-docs-with-thally.md
 ---
 
 I needed to publish a small, honest documentation site for an HTTP API, and I wanted every
@@ -183,7 +183,7 @@ catch a broken link to a generated API page, whose slugs follow the pattern
 The build precompiles every MDX page. A syntax error in one page fails the whole build, and it
 also fails `npm install` because the same step runs on `postinstall`. Treat MDX like code.
 
-Agent readiness went from **89 (B)** on the starter to **{{SCORE_AFTER}}** after three changes:
+Agent readiness went from **89 (B)** on the starter to **100 (A)** after three changes:
 response examples on every operation, `lastVerified` on every page, and a `readiness.goldenQuestions`
 list in `docs.json` with eight questions a reader might ask and the page that should answer each.
 That last one runs against the site's own search index, so it is a cheap, deterministic test that
@@ -200,7 +200,7 @@ git push -u origin docs/frankfurter-v2-launch
 
 Opening the pull request did two things without any configuration: the repository's CI workflow
 ran `thally check --ci`, and Thally Cloud built an isolated preview deployment for the branch.
-{{PREVIEW_SENTENCE}}
+The preview has its own address, listed on the Cloud **Deployments** page with status **Ready**. It stays separate from production, cannot promote itself, and retires when the pull request closes, so it is the right place to click through every page on a phone before merging.
 
 Merging to `main` published the site. Content-only changes take a fast path; this one touched
 `docs.json` and `site.ts` as well, so it went through a full build and still finished in a few
