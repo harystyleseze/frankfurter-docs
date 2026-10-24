@@ -71,4 +71,24 @@ upgrade an existing site or move a production release pointer.
 
 ## Product context
 
-<!-- Add canonical terminology, audience details, and content boundaries here. -->
+This site documents **Frankfurter**, an open-source, keyless exchange-rate API
+(`https://api.frankfurter.dev/v2`, upstream repo `lineofflight/frankfurter`).
+It is an independent community site, not an official Frankfurter publication.
+
+- **Audience:** developers integrating exchange rates (fintech, remittance,
+  analytics), with a West African reader in mind. Prefer `USD`/`NGN` examples
+  and mention `GHS`, `KES`, `ZAR` where a second currency helps.
+- **Terminology:** `base` is the currency you have, `quote` the currency you
+  want, `rate` is units of quote per one base. A *blended rate* is Frankfurter's
+  outlier-filtered combination of every provider's observation. A *provider* is
+  a central bank or official source identified by a key such as `ECB` or `CBN`.
+- **Scope:** document API v2 only. Mention v1 solely as deprecated. Do not
+  document self-hosting beyond linking to `https://frankfurter.dev/deploy/`.
+- **Accuracy rules:** every request and response in a page must have been run
+  against the live API; keep the real values and set `lastVerified` to the run
+  date. Never invent rates, dates, provider keys, or error messages. When API
+  behavior is uncertain, say so rather than guessing.
+- **Source of truth for endpoints:** `openapi.yaml`, vendored from the official
+  `https://api.frankfurter.dev/v2/openapi.json`. Re-vendor with the script in
+  `scripts/vendor-openapi.mjs` rather than hand-editing operations; only tags
+  and added examples are local changes.
