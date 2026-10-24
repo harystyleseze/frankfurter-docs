@@ -4,7 +4,7 @@ Community documentation for [Frankfurter](https://frankfurter.dev), the free, op
 exchange-rate API, built and published with [Thally](https://thally.io).
 
 - **Live site:** https://frankfurter-docs.thally.app
-- **Article (how this site was built):** see `article/` in this repository
+- **Article (how this site was built):** https://harystyles.hashnode.dev/build-and-publish-api-docs-on-thally (source in `article/`)
 - **Upstream API project:** https://github.com/lineofflight/frankfurter
 
 ## What is in here

@@ -1,124 +1,134 @@
 ---
-title: "Build and publish API docs on Thally: quickstart, guide, and a generated reference"
-subtitle: "How the Frankfurter API docs site was built on Thally Cloud, with every command verified on 2026-10-24, and five reproducible findings for the Thally team."
-slug: build-api-docs-with-thally
+title: "Build and publish API docs on Thally"
+subtitle: "Set up a Thally Cloud site, generate an API reference from an OpenAPI file, and publish through a pull request. Worked example: the Frankfurter exchange-rate API."
+slug: build-and-publish-api-docs-on-thally
+cover: images/cover.png
 tags: documentation, developer-experience, api, openapi
 ---
 
-This article builds a documentation site for an HTTP API on [Thally](https://thally.io): an
-introduction, a quickstart, one guide with troubleshooting, and an API reference generated from an
-OpenAPI file with a console that sends real requests. The example API is
-[Frankfurter](https://frankfurter.dev), a free exchange-rate API with no key.
+By the end of this guide you will have a published documentation site for an HTTP API with:
 
-- Live site: https://frankfurter-docs.thally.app
-- Source: https://github.com/harystyleseze/frankfurter-docs
+- an introduction, a quickstart, and one guide with troubleshooting;
+- an API reference generated from your OpenAPI file, with a console that sends real requests;
+- Markdown mirrors, `llms.txt`, and an MCP server produced from the same source;
+- a pull-request workflow where every change is checked before it goes live.
 
-Thally takes a Git repository of MDX pages plus one `docs.json` file and publishes it as a Next.js
-site. The same source also produces a Markdown mirror of every page, JSON and JSON-LD versions,
-`llms.txt`, a search index, and a read-only MCP server. You can self-host the runtime or connect
-the repository to Thally Cloud, which builds, previews, and publishes it. This article uses Cloud.
+The worked example is [Frankfurter](https://frankfurter.dev), a free exchange-rate API with no
+API key. Finished site: https://frankfurter-docs.thally.app. Source:
+https://github.com/harystyleseze/frankfurter-docs. Where a value is specific to this example, the
+placeholder you should use is shown first.
+
+[Thally](https://thally.io) publishes a Git repository of MDX pages plus one `docs.json` file as a
+Next.js site. You can self-host the runtime or connect the repository to Thally Cloud, which
+builds, previews, and publishes it. This guide uses Cloud. Links go to
+[Thally's documentation](https://docs.thally.io) where a topic has more depth.
 
 ## Prerequisites
 
 - A GitHub account. Thally creates the docs repository through a GitHub App.
-- Node.js 20.19+, 22.14+, or 24, only for local preview. Publishing needs no Node.
-- An API whose first request works without sign-up or approval.
+- Node.js 20.19+, 22.14+, or 24 for local preview. Check with `node --version`. Publishing does
+  not need Node.
+- An API whose first request succeeds without sign-up or approval.
 - About two hours.
 
-## Step 1: Run the quickstart's first request
+## Step 1: Verify the API's first request
 
-Run the first command of your quickstart before writing anything. If it does not return a
-successful response as-is, change the example.
+Run the first command your quickstart will show. If it does not succeed as written, change the
+example before writing anything else.
 
 ```bash
 curl https://api.frankfurter.dev/v2/rate/USD/NGN
 ```
 
+Expected output (the date and rate will be current when you run it):
+
 ```json
 {"date":"2026-10-24","base":"USD","quote":"NGN","rate":1340.09}
 ```
 
-Frankfurter needs no key, has no quota, covers 165 currencies, and publishes an OpenAPI spec at
-`https://api.frankfurter.dev/v2/openapi.json`. The response above, with its real date and rate, is
-what the quickstart page shows.
+Frankfurter publishes its OpenAPI spec at `https://api.frankfurter.dev/v2/openapi.json`. You
+need your API's spec in Step 4.
 
 ## Step 2: Create the site in Thally Cloud
 
 Sign in at `app.thally.io` and select **Create a site**. The wizard has five steps.
 
-**Site details.** Site name, one-line summary, and your `*.thally.app` address, checked for
-availability as you type.
+1. **Site details.** Enter the site name, a one-line summary, and the address
+   `<your-site>.thally.app` (example: `frankfurter-docs.thally.app`). On Cloud, the name and
+   summary set the header text, page titles, and the `llms.txt` heading, so write them as readers
+   should see them. Both can be changed later in **Site settings**.
 
-![Site details step with the name frankfurter-docs and the address frankfurter-docs.thally.app marked available](images/01-site-details.png)
+2. **Docs source.** The repository that becomes your site. Select **Create a new docs
+   repository** (1), choose the GitHub account and a repository name (2), and leave
+   **Private repository** on or off as you prefer (3). The other two options import a public
+   docs site by URL or connect a Thally repository you already have.
 
-**Docs source.** The repository that is your site. It is the only thing Thally builds and
-publishes. Three options:
+   ![Docs source step: (1) Create a new docs repository, (2) account and repository name, (3) the private toggle](images/02-docs-source.png)
 
-- **Create a new docs repository** (recommended): a GitHub repo from Thally's starter template
-  under your account. The **Private repository** toggle is on by default.
-- **Import from a docs URL**: crawls a public documentation site into a new repository.
-- **Use an existing repository**: a Thally project already on GitHub.
+   GitHub then asks you to install the Thally Labs app. The wizard expects **All repositories**
+   (1) with the listed permissions (2). If your organisation allows selected-repository installs
+   only, create a compatible repository first and use **Use an existing repository**.
 
-![Docs source step with Create a new docs repository selected, the account and repository name filled in, and the private toggle on](images/02-docs-source.png)
+   ![GitHub App install screen: (1) All repositories, (2) the requested permissions](images/03-github-app-permissions.png)
 
-The first option installs the Thally Labs GitHub App, which asks for **All repositories** with read
-and write access to code, pull requests, and workflows. If your organisation only allows
-selected-repository installs, create a compatible repo first and use the third option.
+3. **Product sources.** Other repositories, such as your API's code, that Thally Track watches
+   to propose documentation updates. Select **I'll do this later**. See
+   [Thally Track](https://docs.thally.io/guides/thally-track).
 
-![GitHub App install screen with All repositories selected and the requested permissions listed](images/03-github-app-permissions.png)
+4. **Knowledge surfaces.** Repositories Track can write to but Thally does not build. Skip for a
+   first site.
 
-**Product sources.** Optional. Other repositories, such as your API's code, that Thally Track
-watches to propose documentation updates when they change. Skip for a first site.
+5. **Review and publish.** Select **Publish site**.
 
-**Knowledge surfaces.** Optional. Other repositories Track can write to but Thally does not build.
-Skip for a first site.
+Home shows **Waiting to publish** (1) while the first deployment runs. The Site at a glance
+panel reads **Repository: Not connected** (2) until it finishes. Wait one to two minutes.
 
-**Review and publish.** Select **Publish site**.
+![Home page during the first publish: (1) Waiting to publish, (2) Repository: Not connected](images/05-home-publishing.png)
 
-![Review and publish step summarising the site, the new private repository, and the skipped steps](images/04-review-and-publish.png)
+When the status is **Live** (1), the first agent-readiness report shows 89 out of 100, grade B,
+for the ten starter pages (2). **View live site** (3) opens the template content.
 
-Home shows **Waiting to publish**. While the first deployment runs, the Site at a glance panel
-reads **Repository: Not connected**. This is not an error. Wait one to two minutes.
-
-![Home page during the first publish showing Waiting to publish, Repository Not connected, and the Set up Track banner](images/05-home-publishing.png)
-
-When the status is **Live**, the repository is linked, **View live site** opens the template
-content, and the first agent-readiness report shows 89 out of 100, grade B, for ten starter pages.
-
-![Home page after publishing showing Live, agent readiness 89 out of 100 grade B, and the linked repository](images/06-home-live-readiness.png)
+![Home page after publishing: (1) Live, (2) agent readiness 89 out of 100, (3) View live site](images/06-home-live-readiness.png)
 
 ## Step 3: Clone the repository
 
 ```bash
-git clone https://github.com/<you>/<your-docs-repo>
+git clone https://github.com/<your-account>/<your-docs-repo>
 cd <your-docs-repo>
 npm ci
-npm run dev   # http://localhost:3040
+npm run dev
 ```
 
-The repository is a copy of Thally's starter. You own these paths:
+Example: `git clone https://github.com/harystyleseze/frankfurter-docs`. The site runs at
+`http://localhost:3040`.
+
+The repository is a copy of Thally's starter. These paths are yours to edit:
 
 | Path | What it is |
 |---|---|
 | `src/content/**.mdx` | Pages. The file path is the URL: `guides/historical-rates.mdx` is `/guides/historical-rates`. |
-| `docs.json` | Tabs, sidebar groups, page order, redirects, footer, feature flags. |
-| `openapi.yaml` | Your API spec. One tab in `docs.json` points at it and the reference is generated. |
-| `src/data/site.ts` | Site name, description, links, brand palette. |
+| `docs.json` | Tabs, sidebar groups, page order, redirects, footer, feature flags. [Reference](https://docs.thally.io/guides/docs-json-reference). |
+| `openapi.yaml` | Your API spec. The API reference is generated from it. |
+| `src/data/site.ts` | Site name, description, links, and brand palette for self-hosted builds. |
 | `AGENTS.md` | Writing rules for people and coding agents who edit the docs. |
 
-Everything else is the runtime, pinned by `starter-release.json` and refreshed by a weekly "Update
-Thally framework" pull request. Do not edit it.
+Everything else is the runtime, pinned by `starter-release.json` and refreshed by a weekly
+"Update Thally framework" pull request. Do not edit it.
 
-## Step 4: Replace the OpenAPI spec
+## Step 4: Add your OpenAPI spec
 
-Download your spec and save it as `openapi.yaml`. For Frankfurter, `scripts/vendor-openapi.mjs`
-in the repo converts the official JSON to YAML and makes three changes:
+Save your spec as `openapi.yaml` at the repository root, then check three things:
 
-- adds a `tags` entry to every operation, because the sidebar groups endpoints by their first tag
-  and the upstream spec has none;
-- adds a `200` response example, captured with `curl`, to the two operations out of nine that lack
-  one. Thally's readiness check `openapi_examples` fails any operation without a 2xx example;
-- records the upstream version and capture date in `info.description`.
+- **`servers`** lists the base URL the console should call. The **Try it** panel relays requests
+  through the docs server, so the API does not need CORS, but the URL must match a `servers`
+  entry.
+- **`tags`** on every operation. The sidebar groups operations by their first tag; untagged
+  operations land in one flat group.
+- **A 2xx response `example`** on every operation. Thally's readiness check `openapi_examples`
+  fails any operation without one.
+
+For Frankfurter, `scripts/vendor-openapi.mjs` in the example repository downloads the upstream
+spec and applies the last two changes, so the file can be regenerated instead of hand-edited.
 
 Point a tab at the spec in `docs.json`:
 
@@ -130,13 +140,13 @@ Point a tab at the spec in `docs.json`:
 }
 ```
 
-Each operation becomes a page with parameters, examples, and a **Try it** panel. The panel relays
-requests through the docs server, so the API does not need CORS. The request URL must match an
-entry in the spec's `servers` list.
+Each operation becomes a page with parameters, examples, and the **Try it** panel. See
+[API reference setup](https://docs.thally.io/guides/api-reference-setup).
 
 ## Step 5: Write the pages
 
-Delete the starter pages and write your own. Every page starts with frontmatter:
+Delete the starter pages under `src/content/` and write your own. Every page starts with
+frontmatter:
 
 ```yaml
 ---
@@ -147,124 +157,133 @@ verifiedVersion: "2.1.1"
 ---
 ```
 
-`title` and `description` are required. The description is the search snippet and the summary AI
-tools see. `lastVerified` is the date a person ran the page's examples; the readiness report
-rewards it, and `thally check --drift` can later flag pages whose sources changed since.
+- `title` and `description` are required. The description is the search snippet and the summary
+  AI tools read.
+- `lastVerified` is the date a person ran the page's examples. The readiness report rewards it,
+  and `thally check --drift` can flag pages whose sources changed since.
+- Use `navTitle` for a shorter sidebar label. Full list:
+  [frontmatter reference](https://docs.thally.io/guides/frontmatter-reference).
 
-Components used on this site: `<Steps>` for the quickstart, `<Tabs>` for JavaScript and Python,
-one `<Accordion>` per troubleshooting case, and `<Note>`, `<Tip>`, `<Warning>`.
-
-Run every example and paste the real output. On this site that caught one failure: the Python
-sample using `urllib` returned `403 Forbidden` with body `error code: 1010`, while `curl`, Node's
-`fetch`, and `requests` succeeded. Frankfurter's CDN blocks Python's default User-Agent. Sending a
-`User-Agent` header fixes it, and the fix is in the quickstart, the guide's troubleshooting, and
-the API overview's error table.
-
-Register every page in `docs.json`. An unregistered page is an orphan warning in `thally check`
-and does not count in the readiness discovery check. Add `redirects` in `docs.json` for the
+Register every page in `docs.json`. Unregistered pages are reported as orphans by `thally check`
+and do not count in the readiness discovery check. Add `redirects` in `docs.json` for the
 starter pages you deleted.
+
+Components used on the example site: `<Steps>`, `<Tabs>` for JavaScript and Python samples, one
+`<Accordion>` per troubleshooting case, and `<Note>`, `<Tip>`, `<Warning>`.
+
+Run every example and paste the real output. On the example site this caught one failure: the
+Python sample using `urllib` returned `403 Forbidden` with body `error code: 1010`, while `curl`,
+Node's `fetch`, and `requests` succeeded. Frankfurter's CDN blocks Python's default User-Agent.
+The fix, a `User-Agent` header, is in the quickstart, the guide's troubleshooting section, and
+the API overview's error table.
 
 ## Step 6: Validate locally
 
 ```bash
-npm run check        # frontmatter, orphans, broken links and anchors, OpenAPI structure
+npm run check
 npm run typecheck
 npm run build
-npm start            # then: curl -s localhost:3040/api/agent-readiness | jq '.score, .grade'
 ```
 
-`npm run check` fetches the latest CLI through `npx` and needs network. `npm run build`
-precompiles every MDX page; the same step runs on `postinstall`, so a broken page also fails
-`npm ci`.
+- `npm run check` reports missing frontmatter, orphan pages, broken links and anchors, and
+  OpenAPI structure. Expected output: `No issues found.`
+- `npm run build` compiles every MDX page. The same step runs on `postinstall`, so a page with
+  an unclosed tag fails `npm ci` as well as the build. The error names the file and line.
 
-On the production build, readiness went from **89 (B)** to **100 (A)** after three changes: a
-response example on every operation, `lastVerified` on every page, and a
-`readiness.goldenQuestions` list in `docs.json` with eight questions and the page that should
-answer each. That check runs the questions against the site's own search index.
+To see the readiness score on the production build:
+
+```bash
+npm start
+curl -s localhost:3040/api/agent-readiness | jq '.score, .grade'
+```
+
+On the example site the score went from 89 (B) to 100 (A) after three changes: a 2xx example on
+every operation, `lastVerified` on every page, and a `readiness.goldenQuestions` list in
+`docs.json` with eight reader questions and the page that should answer each. That check runs
+the questions against the site's own search index.
 
 ## Step 7: Publish through a pull request
 
 ```bash
-git checkout -b docs/frankfurter-v2-launch
+git checkout -b <branch-name>
 git add -A
-git commit -m "docs: document the Frankfurter v2 API"
-git push -u origin docs/frankfurter-v2-launch
+git commit -m "<message>"
+git push -u origin <branch-name>
 ```
 
-Open the pull request. The repository's CI reads the changed paths: a diff limited to
-`src/content/`, `docs.json`, or `openapi.yaml` runs only `thally check --ci`; anything else runs
-the full typecheck and production build. Per Thally's documentation, Cloud also builds an isolated
-preview for each docs pull request, listed on the **Deployments** page, and merging to `main`
-publishes after validation, with rollback from the same page.
+Example: branch `docs/frankfurter-v2-launch`, message `docs: document the Frankfurter v2 API`.
 
-After the merge, confirm the outputs:
+Open the pull request on GitHub. The repository's CI workflow reads the changed paths: a diff
+limited to `src/content/`, `public/`, `docs.json`, `openapi.yaml`, or the README runs
+`thally check --ci` only; any other change runs the full typecheck and production build. Thally
+Cloud builds a preview for each docs pull request, listed on the **Deployments** page. Merge to
+`main` to publish. Rollback is on the same page. See
+[Thally Cloud](https://docs.thally.io/guides/thally-cloud).
+
+After the merge, confirm the published outputs:
 
 ```bash
-curl -s https://frankfurter-docs.thally.app/llms.txt | head
-curl -s https://frankfurter-docs.thally.app/quickstart.md | head
-curl -s https://frankfurter-docs.thally.app/api/agent-readiness | jq '.score, .grade'
-npx @modelcontextprotocol/inspector --cli https://frankfurter-docs.thally.app/api/mcp --transport http --method tools/list
+curl -s https://<your-site>.thally.app/api/agent-readiness | jq '.score, .grade'
+curl -s https://<your-site>.thally.app/llms.txt
+curl -s https://<your-site>.thally.app/quickstart.md | head
+npx @modelcontextprotocol/inspector --cli https://<your-site>.thally.app/api/mcp --transport http --method tools/list
 ```
 
-> **Verified after merge:** this block is updated with the live readiness score, the `llms.txt`
-> page list, and the MCP tool count once the pull request is merged. Until then, numbers in this
-> article are from the local production build.
+Results for the example site, 2026-10-24, about five minutes after the merge: readiness
+`100` / `"A"` across five pages; `llms.txt` lists Introduction, Quickstart, Historical rates,
+Overview, and Changelog; the MCP server exposes eight tools (`list_pages`, `read_page`,
+`search_docs`, `search_sections`, `list_api_operations`, `get_api_operation`, `list_changes`,
+`agent_readiness`).
 
-## Findings for the Thally team, with steps to reproduce
+## Findings for the Thally team
 
-### 1. Every new site starts with a failing check it did not cause
+Each item was hit while building this site, is not covered in Thally's documentation, and can be
+repeated with the steps given.
 
-**Steps:** create a site from the starter template; open the readiness report.
-**Observed:** 89/100, grade B. `openapi_examples` fails because the starter's sample
-`openapi.yaml` has operations without 2xx examples.
-**Expected:** a clean baseline.
-**Suggestion:** ship the starter spec with examples on every operation.
+### 1. A page that cannot compile reaches a green pull request
 
-### 2. `thally check` passes a page that cannot compile, and content-only CI runs only `thally check`
+**Steps.** Create `src/content/_broken.mdx` with valid frontmatter and an unclosed `<Note>`.
+Run `npm run check`, then `npm run runtime-sources:build`.
+**Observed.** `check` reports two warnings (orphan, short body) and exits cleanly. The build
+fails: `Failed to compile runtime MDX src/content/_broken.mdx: Expected a closing tag for <Note>
+(2:1-2:7)`. CI runs only `thally check --ci` for diffs under `src/content/`, so the pull request
+is green and the build fails later. `check` already parses MDX for pages containing `<Step` but
+discards the parse error.
+**Resolution.** Report MDX parse errors from `check`, or add `npm run runtime-sources:build` to
+the content-only CI path.
 
-**Steps:** create `src/content/_broken.mdx` with valid frontmatter and an unclosed `<Note>`; run
-`npm run check`; then run `npm run runtime-sources:build`.
-**Observed:** `check` reports `"_broken" is not in docs.json nav (orphan)` and `Very short body`
-and exits cleanly. The build fails with
-`Failed to compile runtime MDX src/content/_broken.mdx: Expected a closing tag for <Note> (2:1-2:7)`.
-CI selects the content-only path for a diff under `src/content/`, which runs only
-`thally check --ci`.
-**Expected:** a pull request that will fail to build is not green.
-**Suggestion:** compile MDX in `check`, or add `runtime-sources:build` to the content-only CI path.
-The compile error itself is good: it names the file and line.
+### 2. Local and CI checks run different CLI versions
 
-### 3. Unknown frontmatter keys are accepted silently
+**Steps.** Read the `check` script in `package.json` and the version in
+`.github/thally-tooling/package.json`; run `npm view @thallylabs/cli version`.
+**Observed.** Local runs `@thallylabs/cli@latest` (0.8.124 on 2026-10-24); CI runs the pinned
+0.8.120. The two can disagree.
+**Resolution.** Point the local script at the pinned tooling:
+`"check": "npm ci --ignore-scripts --prefix .github/thally-tooling && .github/thally-tooling/node_modules/.bin/thally check"`,
+so the weekly framework update bumps one version for both.
 
-**Steps:** add `sidebarTitle: Wrong label` to any page; run `npm run check`.
-**Observed:** "No issues found." The sidebar label does not change. The documented field is
-`navTitle`; `sidebarTitle` is the name another docs tool uses, so migrating teams will type it.
-**Expected:** a warning for keys the runtime does not read.
-**Suggestion:** validate frontmatter against the documented key list and warn on the rest.
+### 3. Unknown frontmatter keys pass silently
 
-### 4. The wizard and first Home page use terms they do not define
+**Steps.** Add `sidebarTitle: Wrong label` to any page. Run `npm run check`.
+**Observed.** `No issues found.` The sidebar label does not change. The documented field is
+`navTitle`; `sidebarTitle` is the name another docs tool uses, and the migration package already
+maps it. `check` has no key list.
+**Resolution.** Warn in `check` on keys outside the documented list, reusing the migration
+package's mapping.
 
-**Steps:** run the Create a site wizard without reading the Cloud guides.
-**Observed:** "Docs source", "Product sources", and "Knowledge surfaces" are step titles with no
-definition in place. During the first publish, Home shows **Repository: Not connected** and a
-**Set up Track** banner at 40% before the first deployment has finished.
-**Expected:** one sentence per step saying what it is and whether it is needed today; a status that
-reads as in progress rather than disconnected.
-**Suggestion:** inline definitions with a "Learn more" link; hold the Track prompt until the first
-deployment is live.
+### 4. The readiness score's heaviest check is undocumented, and the starter fails one out of the box
 
-### 5. Search prefers generated operation pages for questions containing "rate"
+**Steps.** Create a site from the starter and open the readiness report. Search the
+`docs.json` reference for `readiness`. Add `readiness.goldenQuestions` and rerun.
+**Observed.** 89/B with `openapi_examples` failing on the starter spec. The reference has no
+`readiness` key, although the starter's `docs.json` ships one and `retrieval_eval` carries the
+largest weight. One golden question on this site missed until reworded: generated `/rates`
+operation pages outranked the authored page for any question containing "rate".
+**Resolution.** Ship the starter spec with examples; document `readiness.topK` and
+`readiness.goldenQuestions`; weight authored pages above operation pages in search.
 
-**Steps:** add the golden question "How often are rates updated and should I cache them?" with the
-API overview as the expected page; run the readiness report.
-**Observed:** the question missed the top five; the generated `/rates` pages outranked the prose
-page that answers it. Rewording to "Should I cache responses, and how often does Frankfurter
-publish new rates?" fixed it.
-**Expected:** an authored page whose description answers the question outranks a reference page
-that shares a token.
-**Suggestion:** boost authored pages, or weight operation-path matches less.
+## Next steps
 
-## What worked
-
-Publishing needed no local tooling. The readiness report gives a fix hint per failing check. The
-Try it console relays requests server-side, so CORS never came up. One source produced the HTML,
-the Markdown mirrors, `llms.txt`, and the MCP server with no second pipeline.
+- Thally documentation: https://docs.thally.io
+- Example repository, including the spec script and the pages: https://github.com/harystyleseze/frankfurter-docs
+- Frankfurter API: https://frankfurter.dev
